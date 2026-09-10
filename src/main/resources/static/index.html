@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Knowledge Base</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.08);
+    --text: #e4e4e7;
+    --text-muted: #71717a;
+    --mcp: #a855f7;
+    --mcp-bg: rgba(168,85,247,0.08);
+    --mcp-border: rgba(168,85,247,0.25);
+    --llm: #3b82f6;
+    --llm-bg: rgba(59,130,246,0.08);
+    --llm-border: rgba(59,130,246,0.25);
+    --agents: #22c55e;
+    --agents-bg: rgba(34,197,94,0.08);
+    --agents-border: rgba(34,197,94,0.25);
+    --ai-general: #f97316;
+    --ai-general-bg: rgba(249,115,22,0.08);
+    --ai-general-border: rgba(249,115,22,0.25);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-glow.purple { background: var(--mcp); top: -200px; left: -100px; }
+  .bg-glow.blue { background: var(--llm); bottom: -200px; right: -100px; }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 40px 32px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--mcp), var(--llm));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+
+  .logo h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .logo h1 span { color: var(--text-muted); font-weight: 400; }
+
+  .stats {
+    display: flex;
+    gap: 24px;
+  }
+
+  .stat {
+    text-align: center;
+    padding: 12px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-badge {
+    font-size: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 10px;
+    border-radius: 20px;
+    color: var(--text-muted);
+  }
+
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .note-card {
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: fadeInUp 0.4s ease;
+  }
+
+  .note-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .note-card.topic-mcp { background: var(--mcp-bg); border-color: var(--mcp-border); }
+  .note-card.topic-llm { background: var(--llm-bg); border-color: var(--llm-border); }
+  .note-card.topic-agents { background: var(--agents-bg); border-color: var(--agents-border); }
+  .note-card.topic-ai_general { background: var(--ai-general-bg); border-color: var(--ai-general-border); }
+
+  .note-topic {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+  }
+
+  .topic-mcp .note-topic { color: var(--mcp); }
+  .topic-llm .note-topic { color: var(--llm); }
+  .topic-agents .note-topic { color: var(--agents); }
+  .topic-ai_general .note-topic { color: var(--ai-general); }
+
+  .note-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .note-content {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .note-id {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.5;
+    font-family: monospace;
+  }
+
+  .todos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease, opacity 0.3s ease;
+    animation: fadeInUp 0.4s ease;
+  }
+
+  .todo-item.completed {
+    opacity: 0.45;
+  }
+
+  .todo-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .todo-item.completed .todo-check {
+    background: var(--agents);
+    border-color: var(--agents);
+  }
+
+  .todo-check svg {
+    width: 12px;
+    height: 12px;
+    stroke: white;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .todo-item.completed .todo-check svg { opacity: 1; }
+
+  .todo-body { flex: 1; }
+
+  .todo-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+
+  .todo-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .todo-topic {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .todo-topic.topic-mcp { background: var(--mcp-bg); color: var(--mcp); }
+  .todo-topic.topic-llm { background: var(--llm-bg); color: var(--llm); }
+  .todo-topic.topic-agents { background: var(--agents-bg); color: var(--agents); }
+  .todo-topic.topic-ai_general { background: var(--ai-general-bg); color: var(--ai-general); }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 20px; align-items: flex-start; }
+    .container { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow purple"></div>
+<div class="bg-glow blue"></div>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">&#x2728;</div>
+      <h1>AI Knowledge Base <span>/ MCP Demo</span></h1>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="noteCount">0</div>
+        <div class="stat-label">Notes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="todoCount">0</div>
+        <div class="stat-label">Tasks</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="completionRate">0%</div>
+        <div class="stat-label">Done</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span>Live &mdash; waiting for MCP tool calls to update state&hellip;</span>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="section-header">
+        <div class="section-title">&#x1F4CB; Notes</div>
+        <div class="section-badge" id="notesBadge">0</div>
+      </div>
+      <div id="notesContainer" class="notes-grid">
+        <div class="empty-state"><div class="icon">&#x1F4AD;</div>No notes yet</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-header">
+        <div class="section-title">&#x2705; Learning Tasks</div>
+        <div class="section-badge" id="todosBadge">0</div>
+      </div>
+      <div id="todosContainer" class="todos-list">
+        <div class="empty-state"><div class="icon">&#x1F4DD;</div>No tasks yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const topicColors = {
+  MCP: 'mcp',
+  LLM: 'llm',
+  AGENTS: 'agents',
+  'AI_GENERAL': 'ai_general'
+};
+
+function topicClass(topic) {
+  return 'topic-' + (topicColors[topic] || 'ai_general');
+}
+
+function topicLabel(topic) {
+  const labels = { MCP: 'MCP', LLM: 'LLM', AGENTS: 'Agents', AI_GENERAL: 'AI' };
+  return labels[topic] || topic;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderNotes(notes) {
+  const container = document.getElementById('notesContainer');
+  if (!notes || notes.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">&#x1F4AD;</div>No notes yet</div>';
+    return;
+  }
+  container.innerHTML = notes.map(n => `
+    <div class="note-card ${topicClass(n.topic)}">
+      <div class="note-id">#${escapeHtml(n.id)}</div>
+      <div class="note-topic">${escapeHtml(topicLabel(n.topic))}</div>
+      <div class="note-title">${escapeHtml(n.title)}</div>
+      <div class="note-content">${escapeHtml(n.content)}</div>
+    </div>
+  `).join('');
+}
+
+function renderTodos(todos) {
+  const container = document.getElementById('todosContainer');
+  if (!todos || todos.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">&#x1F4DD;</div>No tasks yet</div>';
+    return;
+  }
+  container.innerHTML = todos.map(t => `
+    <div class="todo-item ${t.completed ? 'completed' : ''}">
+      <div class="todo-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="todo-body">
+        <div class="todo-title">${escapeHtml(t.title)}</div>
+        <div class="todo-desc">${escapeHtml(t.description || '')}</div>
+      </div>
+      <div class="todo-topic ${topicClass(t.topic)}">${escapeHtml(topicLabel(t.topic))}</div>
+    </div>
+  `).join('');
+}
+
+function updateStats(notes, todos) {
+  const nCount = notes ? notes.length : 0;
+  const tCount = todos ? todos.length : 0;
+  const done = todos ? todos.filter(t => t.completed).length : 0;
+  const pct = tCount > 0 ? Math.round((done / tCount) * 100) : 0;
+
+  document.getElementById('noteCount').textContent = nCount;
+  document.getElementById('todoCount').textContent = tCount;
+  document.getElementById('completionRate').textContent = pct + '%';
+  document.getElementById('notesBadge').textContent = nCount;
+  document.getElementById('todosBadge').textContent = tCount;
+}
+
+function applyState(data) {
+  renderNotes(data.notes);
+  renderTodos(data.todos);
+  updateStats(data.notes, data.todos);
+}
+
+// Initial load
+fetch('/dashboard/state')
+  .then(r => r.json())
+  .then(applyState)
+  .catch(e => console.error('Failed to load state:', e));
+
+// SSE for live updates
+function connectSSE() {
+  const source = new EventSource('/dashboard/stream');
+  source.addEventListener('update', function(e) {
+    try {
+      const data = JSON.parse(e.data);
+      applyState(data);
+    } catch (err) {
+      console.error('SSE parse error:', err);
+    }
+  });
+  source.onerror = function() {
+    source.close();
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+connectSSE();
+</script>
+</body>
+</html>
